@@ -1,0 +1,22 @@
+name = "line-webhook-proxy"
+main = "src/index.js"
+compatibility_date = "2025-08-01"
+
+account_id = "7cf231dad7939db88f6445694914aa1e"
+workers_dev = true
+
+# Durable Object
+[[durable_objects.bindings]]
+name = "WEBHOOK_Q"
+class_name = "WebhookQueue"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["WebhookQueue"]
+
+[triggers]
+# 每分鐘喚醒 DO 排隊重試（Render 醒來後立刻轉送）
+crons = ["*/1 * * * *"]
+
+[vars]
+RENDER_CALLBACK_URL = "https://llm-baseball-app-v1.onrender.com/callback"
