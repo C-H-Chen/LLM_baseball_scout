@@ -32,12 +32,11 @@
 <img width="1920" height="1026" alt="image" src="https://github.com/user-attachments/assets/2205b52d-766f-433e-9676-917354c47342" />
   
 <h4>多輪問答:</h4>  
-
   
+當使用者於後續送出的訊息中未提及球員名字時，系統會於記憶中補足資訊(前一次使用者訊息中的球員名字)，以進行分析與回答。  
   
-<img width="1920" height="1028" alt="image" src="https://github.com/user-attachments/assets/b5d4fa74-85fd-415f-b39f-149211b75a5a" />
-
-
+<img width="1920" height="1028" alt="image" src="https://github.com/user-attachments/assets/b5d4fa74-85fd-415f-b39f-149211b75a5a" />  
+  
 <h4>記憶重置:</h4>  
   
 <img width="1920" height="1031" alt="image" src="https://github.com/user-attachments/assets/332eca70-697a-42b4-93cd-45dd4bd0d483" />   
