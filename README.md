@@ -16,25 +16,24 @@
 # 使用說明:  
   
 本系統能針對數據表現、投球特點與情境策略等不同問題題型，分析現有資料庫的資訊生成專業合理的情蒐報告。  
-
+  
 本系統模型目前是基於下圖提示工程的原則生成回答，可視使用者回饋來調整提示工程的內容以滿足需求。  
   
 下圖為提示工程的內容:  
   
 <img width="1744" height="300" alt="image" src="https://github.com/user-attachments/assets/c9b28d7c-b147-4d10-9b61-310eaaeba28b" />  
   
-<h4>單輪問答:  
-
-  系統接收訊息後，會以訊息中單一個別球員完整且正確的姓名或姓氏作為檢索資訊的依據。  
+<h4>單輪問答:</h4>    
   
-  生成的情蒐報告會最先列出重點摘要，讓使用者能快速掌握核心資訊。  
+系統接收訊息後，會以訊息中單一個別球員完整且正確的姓名或姓氏作為檢索資訊的依據。  
   
-<img width="1920" height="1031" alt="image" src="https://github.com/user-attachments/assets/332eca70-697a-42b4-93cd-45dd4bd0d483" />
+生成的情蒐報告會最先列出重點摘要，讓使用者能快速掌握核心資訊。  
+  
+<img width="1920" height="1031" alt="image" src="https://github.com/user-attachments/assets/332eca70-697a-42b4-93cd-45dd4bd0d483" />  
 
+<h4>多輪問答:</h4>
 
-<h4>多輪問答:
-
-<h4>記憶重置:
+<h4>記憶重置:</h4>
 
 
 # 使用限制:  
