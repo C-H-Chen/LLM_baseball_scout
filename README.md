@@ -5,7 +5,7 @@
 現階段是針對2023年世界棒球經典賽美國隊的全部15位投手進行情蒐，使用者透過LINE傳送訊息至本系統後，  
 系統會針對訊息中單一個別球員前一年(2022年)的賽季相關資料進行分析，生成詳盡的情蒐報告。  
   
-下圖為LINE聊天機器人的QRcode，加好友後即可開始使用:  
+下圖為本系統的LINE聊天機器人之QRcode，加好友後即可開始使用本系統:  
   
 <img width="260" height="265" alt="image" src="https://github.com/user-attachments/assets/a7d6aa2d-e056-4c96-967c-e26daf3c66cc" />  
 
