@@ -57,8 +57,29 @@
 2. 雖有球員整季的逐場數據，但目前生成的情蒐報告是由系統檢索最相關幾場的比賽數據所構成，而非整季數據
    (Gemini的tokens限制)  
   
-4. 使用者第一則留言的回覆會有較久的延遲，依訊息難度與複雜度2~5分鐘不等 (Render Web Service的休眠限制)  
+3. 使用者第一則留言的回覆會有較久的延遲，依訊息難度與複雜度2~5分鐘不等 (Render Web Service的休眠限制)  
 
-5. 以球員完整且正確的姓名或姓氏作為處理問題之依據 (可無視大小寫)
+4. 以球員完整且正確的姓名或姓氏作為處理問題之依據 (可無視大小寫)
 
-6. 目前僅支援2023經典賽美國隊投手2022年賽季的MLB公開數據作回答 (可再擴充)
+5. 目前僅支援2023經典賽美國隊投手2022年賽季的MLB公開數據作回答 (可再擴充)  
+
+# 球員名單:   
+
+目前本系統資料庫針對2023年經典賽美國隊投手群所建置的球員名單如下:  
+  
+姓名  
+Adam Ottavino  
+Kyle Freeland  
+Nick Martinez 
+Aaron Loup 
+Merrill Kelly 
+Lance Lynn  
+Devin Williams 
+Miles Mikolas 
+Jason Adam 
+Kendall Graveman  
+Adam Wainwright 
+Brady Singer  
+Daniel Bard  
+David Bednar  
+Ryan Pressly
