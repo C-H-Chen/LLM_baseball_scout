@@ -8,6 +8,7 @@
 下圖為LINE聊天機器人的QRcode，加好友後即可開始使用:  
   
 <img width="260" height="265" alt="image" src="https://github.com/user-attachments/assets/a7d6aa2d-e056-4c96-967c-e26daf3c66cc" />  
+
   
 下圖為專案架構:  
   
