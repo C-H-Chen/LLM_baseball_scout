@@ -23,6 +23,8 @@
 下圖為提示工程的內容:  
   
 <img width="1744" height="300" alt="image" src="https://github.com/user-attachments/assets/c9b28d7c-b147-4d10-9b61-310eaaeba28b" />  
+
+於LINE輸入 "名單" 兩個字會回覆2023年WBC美國隊參賽投手的完整名單供使用者查詢。  
   
 <h4>單輪問答:</h4>    
   
