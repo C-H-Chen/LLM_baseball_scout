@@ -6,11 +6,11 @@
 系統會針對訊息中單一個別球員前一年(2022年)的賽季表現進行分析，生成詳盡的情蒐報告。  
   
 下圖為LINE聊天機器人的QRcode，加好友後即可開始使用:  
-
+  
 <img width="260" height="265" alt="image" src="https://github.com/user-attachments/assets/a7d6aa2d-e056-4c96-967c-e26daf3c66cc" />  
-
+  
 下圖為專案架構:  
-
+  
 ![architecture](https://github.com/user-attachments/assets/66ee1821-942f-49a5-a6ec-c2100acb3517)  
   
 # 使用說明:  
@@ -20,10 +20,17 @@
 本系統模型目前是基於下圖提示工程的原則生成回答，可視使用者回饋來調整提示工程的內容以滿足需求。  
   
 下圖為提示工程的內容:  
-
+  
 <img width="1744" height="300" alt="image" src="https://github.com/user-attachments/assets/c9b28d7c-b147-4d10-9b61-310eaaeba28b" />  
   
-<h4>單輪問答:
+<h4>單輪問答:  
+
+  系統接收訊息後，會以訊息中單一個別球員完整且正確的姓名或姓氏作為檢索資訊的依據。  
+  
+  生成的情蒐報告會最先列出重點摘要，讓使用者能快速掌握核心資訊。  
+  
+<img width="1920" height="1031" alt="image" src="https://github.com/user-attachments/assets/332eca70-697a-42b4-93cd-45dd4bd0d483" />
+
 
 <h4>多輪問答:
 
