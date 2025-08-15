@@ -62,24 +62,24 @@
 4. 以球員完整且正確的姓名或姓氏作為處理問題之依據 (可無視大小寫)
 
 5. 目前僅支援2023經典賽美國隊投手2022年賽季的MLB公開數據作回答 (可再擴充)  
-
-# 球員名單:   
-
-目前本系統資料庫針對2023年經典賽美國隊投手群所建置的球員名單如下:  
   
-姓名  
-Adam Ottavino  
-Kyle Freeland  
-Nick Martinez 
-Aaron Loup 
-Merrill Kelly 
-Lance Lynn  
-Devin Williams 
-Miles Mikolas 
-Jason Adam 
-Kendall Graveman  
-Adam Wainwright 
-Brady Singer  
-Daniel Bard  
-David Bednar  
-Ryan Pressly
+# 球員名單:   
+  
+目前本系統資料庫針對2023年經典賽美國隊投手群所建置的球員名單如下:    
+    
+姓名    
+Adam Ottavino    
+Kyle Freeland    
+Nick Martinez   
+Aaron Loup   
+Merrill Kelly   
+Lance Lynn    
+Devin Williams   
+Miles Mikolas   
+Jason Adam   
+Kendall Graveman    
+Adam Wainwright   
+Brady Singer    
+Daniel Bard    
+David Bednar    
+Ryan Pressly  
