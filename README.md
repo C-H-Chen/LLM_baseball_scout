@@ -29,12 +29,18 @@
   
 生成的情蒐報告會最先列出重點摘要，讓使用者能快速掌握核心資訊。  
   
-<img width="1920" height="1031" alt="image" src="https://github.com/user-attachments/assets/332eca70-697a-42b4-93cd-45dd4bd0d483" />  
+<img width="1920" height="1026" alt="image" src="https://github.com/user-attachments/assets/2205b52d-766f-433e-9676-917354c47342" />
+  
+<h4>多輪問答:</h4>  
 
-<h4>多輪問答:</h4>
+  
+  
+<img width="1920" height="1028" alt="image" src="https://github.com/user-attachments/assets/b5d4fa74-85fd-415f-b39f-149211b75a5a" />
 
-<h4>記憶重置:</h4>
 
+<h4>記憶重置:</h4>  
+  
+<img width="1920" height="1031" alt="image" src="https://github.com/user-attachments/assets/332eca70-697a-42b4-93cd-45dd4bd0d483" />   
 
 # 使用限制:  
 
