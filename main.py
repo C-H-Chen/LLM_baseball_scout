@@ -1,33 +1,42 @@
 import os
 import re
 import time
-import uvicorn
-
+import threading
 from collections import defaultdict
 from typing import List
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from pydantic import BaseModel
-from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_chroma import Chroma
+from langchain.schema import Document
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from google.api_core.exceptions import ResourceExhausted
 
-# 環境變數
+# load env & HF caches
 load_dotenv()
-os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
 
-# FastAPI app
-app = FastAPI()
+# --- HF cache & model setup 
+HF_CACHE_DIR = os.getenv("HF_CACHE_DIR", "./hf_cache")
+HF_LOCAL_MODEL_DIR = os.getenv("HF_LOCAL_MODEL_DIR", "")  # optional: "./models/all-MiniLM-L6-v2"
+HF_MODEL_NAME = os.getenv("HF_MODEL_NAME", "sentence-transformers/paraphrase-MiniLM-L3-v2")
+CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chromadb_wbc_usa")
 
-# 使用者記憶池
+os.makedirs(HF_CACHE_DIR, exist_ok=True)
+# set env vars so HF/transformers use persistent cache (important on Render)
+os.environ["HF_HOME"] = HF_CACHE_DIR
+os.environ["TRANSFORMERS_CACHE"] = HF_CACHE_DIR
+os.environ["HF_DATASETS_CACHE"] = HF_CACHE_DIR
+
+# GOOGLE API key for Gemini
+os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY", "")
+
+# user memory
 user_memory_store = {}
 user_last_player = {}
 
-# 球員名單
+# players list
 all_players = [
     "Brady Singer", "Lance Lynn", "Devin Williams", "Adam Wainwright",
     "Daniel Bard", "Jason Adam", "David Bednar", "Nick Martinez",
@@ -35,12 +44,12 @@ all_players = [
     "Kyle Freeland", "Adam Ottavino", "Merrill Kelly"
 ]
 
-# lazy vector DB handle
+# lazy globals
 embedding = None
 vectordb = None
 _vectordb_lock = None
 
-# Prompt template
+# prompt
 template = """
 你是一位專業的棒球情蒐分析師，請根據美國隊投手的 2022 年資料，對使用者的問題全面分析與說明。
 
@@ -48,7 +57,7 @@ template = """
 - 結論優先，請先摘要出重點總結或建議（可條列），讓讀者能快速掌握核心資訊
 - 僅依據提供的內容回答，**不得捏造任何未存在的資訊**
 - 如有需進行推論的必要性，**請明確指出屬於推論的部分**
-- 回答清楚、專業、易懂，適合球員、教練與管理層閱讀
+- 回答清楚、專業、易懂
 - 回答後的內容依據從簡附註
 
 【資料紀錄】
@@ -59,25 +68,44 @@ template = """
 
 【請輸出你的回答】
 """
-prompt = PromptTemplate(
-    template=template,
-    input_variables=["context", "question"]
-)
+prompt = PromptTemplate(template=template, input_variables=["context", "question"])
+
 def init_vectordb_if_needed():
-    """Lazy init embedding and vectordb (first call only)."""
     global embedding, vectordb, _vectordb_lock
     if _vectordb_lock is None:
-        import threading
         _vectordb_lock = threading.Lock()
     with _vectordb_lock:
-        if vectordb is None:
-            print("🔄 初次載入向量庫中（lazy init）...")
-            embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-            # persist_directory 與你的原始設定一致
-            vectordb = Chroma(persist_directory="./chromadb_wbc_usa", embedding_function=embedding)
-            print("✅ 向量庫載入完成")
+        if vectordb is not None:
+            return
 
-# 功能函數（保持原有邏輯，僅在需要時才 init vectordb）
+        print("🔄 初次載入向量庫中（lazy init）...")
+
+        try:
+            embedding = HuggingFaceEndpointEmbeddings(
+                model=os.getenv("HF_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"),
+                huggingfacehub_api_token=os.getenv("HF_API_TOKEN")
+            )
+        except Exception as e:
+            # make error explicit and re-raise for caller to catch and push to LINE
+            print("❌ HuggingFaceEmbeddings 初始化失敗:", e)
+            raise RuntimeError(f"HuggingFaceEmbeddings init failed: {e}")
+
+        try:
+            # If Chroma DB folder exists -> load; otherwise try to load but warn (prefill recommended)
+            if os.path.exists(CHROMA_PERSIST_DIR) and os.listdir(CHROMA_PERSIST_DIR):
+                vectordb = Chroma(persist_directory=CHROMA_PERSIST_DIR, embedding_function=embedding)
+                print("✅ 已載入現有向量庫")
+            else:
+                # 如果沒有預先建好的 DB，先嘗試載入）
+                print("⚠️ chroma persist dir 空或不存在，會在第一次 run 時建立。建議預先建立以避免 cold-start 建庫延遲。")
+                vectordb = Chroma(embedding_function=embedding, persist_directory=CHROMA_PERSIST_DIR)
+                print("ℹ️ 已建立 Chroma handle（但未新增 documents）。若向量庫為空，檢索將找不到文件。")
+        except Exception as e:
+            print("❌ Chroma 載入/建立失敗:", e)
+            raise RuntimeError(f"Chroma init failed: {e}")
+
+        print("✅ 向量庫載入完成")
+
 def extract_player_name(question: str, all_players: List[str]) -> List[str]:
     matched = []
     q_lower = question.lower()
@@ -105,8 +133,13 @@ def estimate_token_count(text: str) -> int:
     return int(chinese_chars * 1.2 + non_chinese * 0.75)
 
 def get_answer(question: str, player_name: list = None, user_id: str = "default") -> str:
-    # lazy init vectordb on first real request
-    init_vectordb_if_needed()
+    # lazy init vectordb
+    try:
+        init_vectordb_if_needed()
+    except Exception as e:
+        err = f"❌ 初始化向量庫失敗: {e}"
+        print(err)
+        return err
 
     extracted_players = extract_player_name(question, all_players)
     if extracted_players:
@@ -134,10 +167,9 @@ def get_answer(question: str, player_name: list = None, user_id: str = "default"
     else:
         user_last_player[user_id] = player_name or []
 
-    MAX_TOKENS = 225000
+    MAX_TOKENS = 125000
     MAX_K = 20
     MIN_K = 1
-
     if player_name:
         num_players = len(player_name)
         k_per_player = max(1, MAX_K // num_players)
@@ -158,7 +190,12 @@ def get_answer(question: str, player_name: list = None, user_id: str = "default"
             search_kwargs["filter"] = {"player_name": {"$in": player_name}}
 
         temp_retriever = vectordb.as_retriever(search_kwargs=search_kwargs)
-        docs = temp_retriever.invoke(question)
+        try:
+            docs = temp_retriever.invoke(question)
+        except Exception as e:
+            print(f"檢索時發生例外: {e}")
+            docs = []
+
         if not docs:
             print(f"❗️ k={mid} 無檢索到文件，往更大 k 嘗試")
             low = mid + 1
@@ -178,7 +215,7 @@ def get_answer(question: str, player_name: list = None, user_id: str = "default"
             high = mid - 1
 
     if best_k is None:
-        return "⚠️ 找不到符合 token 限制的資料。"
+        return "⚠️ 找不到符合 token 限制或向量庫沒有相關文件。"
 
     print(f"🔍 最終選擇 k={best_k} 進行回答生成")
 
@@ -188,6 +225,7 @@ def get_answer(question: str, player_name: list = None, user_id: str = "default"
 
     retriever = vectordb.as_retriever(search_kwargs=search_kwargs_final)
 
+    # memory init
     if user_id not in user_memory_store:
         print(f"🔰 為使用者 {user_id} 建立新的記憶池")
         memory = ConversationSummaryBufferMemory(
@@ -207,12 +245,13 @@ def get_answer(question: str, player_name: list = None, user_id: str = "default"
         memory=memory,
         combine_docs_chain_kwargs={"prompt": prompt},
     )
+
     for attempt in range(9):
         try:
             print(f"🚀 問題：{question}（Player: {player_name}） 第 {attempt+1} 次嘗試")
             result = qa_chain.invoke({"question": question})
-            answer = result["answer"]
-            if not answer.strip():
+            answer = result.get("answer", "") if isinstance(result, dict) else ""
+            if not answer or not answer.strip():
                 print("⚠️ 回答為空，稍等 3 秒再試")
                 time.sleep(3)
                 continue
@@ -225,25 +264,20 @@ def get_answer(question: str, player_name: list = None, user_id: str = "default"
             print(f"❌ 發生錯誤：{e}")
             return f"❌ 發生錯誤：{e}"
     return "❌ 多次嘗試仍失敗，請稍後再試或檢查配額。"
-
-# FastAPI API
-class QuestionRequest(BaseModel):
-    question: str
-    user_id: str = "default"
-
-@app.post("/ask")
-def ask_question(req: QuestionRequest):
-    print(f"📥 收到問題：{req.question} 來自使用者：{req.user_id}")
-    answer = get_answer(req.question, user_id=req.user_id)
-    print(f"📤 回答完成，回傳使用者：{req.user_id}")
-    return {"answer": answer}
-
-@app.get("/")
-def home():
-    return {"status": "ok", "message": "Baseball RAG API is running."}
-
-# 啟動服務（若直接跑 main.py）
+'''
+# test
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    print(f"🚀 啟動 API 服務，埠號：{port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    test_questions = [
+        ("Singer的控球如何？", "user_test1"),
+        ("lynn的球路品質如何？", "user_test2"),
+        ("Devin Williams 2022 最常用球種？", "user_test3"),
+        ("Pressly 的救援成功率？", "user_test4"),
+        ("Mikolas 表現分析", "user_test5"),
+    ]
+
+    for q, uid in test_questions:
+        print("="*50)
+        print(f"🔹 測試問題：{q} (使用者: {uid})")
+        ans = get_answer(q, user_id=uid)
+        print(f"💡 回答：{ans}\n")
+'''

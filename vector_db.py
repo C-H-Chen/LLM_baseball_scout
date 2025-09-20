@@ -1,14 +1,14 @@
-import mysql.connector
+import pymysql
 import pandas as pd
 import os
 from tqdm import tqdm
 from dotenv import load_dotenv
 
-from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_chroma import Chroma
 from langchain.schema import Document
 
-# SQL設定
+# 讀取環境變數
 load_dotenv()
 DB_CONFIG = {
     'host': os.getenv("DB_HOST"),
@@ -17,23 +17,26 @@ DB_CONFIG = {
     'password': os.getenv("DB_PASSWORD"),
     'database': os.getenv("DB_DATABASE"),
     'charset': 'utf8mb4',
-    'ssl_ca': os.getenv("DB_SSL_CA"),
-    'ssl_verify_cert': os.getenv("DB_SSL_VERIFY_CERT", "True") == "True",
-    'ssl_verify_identity': os.getenv("DB_SSL_VERIFY_IDENTITY", "True") == "True",
-    'connection_timeout': 10
+    'ssl': {'ca': os.getenv("DB_SSL_CA")},
+    'connect_timeout': 10
 }
+
 TABLE_NAME = "pitching_data"
 TEXT_FILE = "wbc_usa_pitchers_2022.txt"
 PERSIST_DIR = "./chromadb_wbc_usa"
 
 # 讀取資料
-conn = mysql.connector.connect(**DB_CONFIG)
-query = f"SELECT * FROM {TABLE_NAME} ORDER BY player_name, game_date ASC"
-df = pd.read_sql(query, conn)
-conn.close()
-print(f"✅ 已讀取資料，共 {len(df)} 筆紀錄，{df['player_name'].nunique()} 位球員。")
+try:
+    conn = pymysql.connect(**DB_CONFIG)
+    query = f"SELECT * FROM {TABLE_NAME} ORDER BY player_name, game_date ASC"
+    df = pd.read_sql(query, conn)
+    conn.close()
+    print(f"✅ 已讀取資料，共 {len(df)} 筆紀錄，{df['player_name'].nunique()} 位球員。")
+except pymysql.MySQLError as e:
+    print(f"❌ TiDB 連線失敗: {e}")
+    raise
 
-# 分割chunk並生成自然語言描述
+# 分割 chunk 並生成自然語言描述
 def split_by_player_and_game_with_metadata(df, text_file_path=None):
     chunks = []
     full_text_output = []
@@ -74,12 +77,14 @@ def split_by_player_and_game_with_metadata(df, text_file_path=None):
 
     return chunks
 
-# 呼叫上面函式，同時切 chunk 並產出自然語言文字檔
+# 切 chunk 並產出文字檔
 documents = split_by_player_and_game_with_metadata(df, text_file_path=TEXT_FILE)
 
-# 設定Embedding
-os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
-embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+# HuggingFace Embeddings
+embedding = HuggingFaceEndpointEmbeddings(
+    model=os.getenv("HF_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"),
+    huggingfacehub_api_token=os.getenv("HF_API_TOKEN")
+)
 
 # 建立或載入向量庫
 if os.path.exists(PERSIST_DIR) and os.listdir(PERSIST_DIR):

@@ -122,9 +122,16 @@ def background_process_and_push(question: str, target_id: str):
 
     try:
         print(f"背景開始處理（to={target_id}）：{question}")
+        # get_answer 會回傳錯誤字串而非 raise（init 失敗等），我們要把它直接回報給使用者
         answer = main.get_answer(question, user_id=target_id or "default")
         if not answer:
             answer = "❌ 系統在產生回覆時發生錯誤，請稍後再試。"
+
+        # 如果 answer 是 error-like（我們在 main 裡面會回傳包含 "❌ 初始化向量庫失敗" 等訊息）
+        if answer.startswith("❌") or answer.startswith("⚠️"):
+            # 直接 push 錯誤訊息，方便除錯
+            safe_push_single(target_id, answer)
+            return
 
         ulen = utf16_len(answer)
         print(f"回答 UTF-16 長度：{ulen}")
