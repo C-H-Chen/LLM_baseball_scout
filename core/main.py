@@ -20,7 +20,7 @@ load_dotenv()
 # --- HF cache & model setup 
 HF_CACHE_DIR = os.getenv("HF_CACHE_DIR", "./hf_cache")
 HF_LOCAL_MODEL_DIR = os.getenv("HF_LOCAL_MODEL_DIR", "")  # optional: "./models/all-MiniLM-L6-v2"
-HF_MODEL_NAME = os.getenv("HF_MODEL_NAME", "sentence-transformers/paraphrase-MiniLM-L3-v2")
+HF_MODEL_NAME = os.getenv("HF_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
 CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chromadb_wbc_usa")
 
 os.makedirs(HF_CACHE_DIR, exist_ok=True)
